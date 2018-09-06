@@ -1,52 +1,23 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-
-import 'package:flutter/animation.dart';
 import 'package:flutter/physics.dart';
-
-
-class LogoApp extends StatefulWidget {
-  _LogoAppState createState() => _LogoAppState();
-}
-
-class _LogoAppState extends State<LogoApp> {
-
-
-  Widget build(BuildContext context) {
-    final double screenheight = MediaQuery.of(context).size.height;
-    final double screenwidth = MediaQuery.of(context).size.width;
-    print(screenheight);
-    return  Scaffold(
-        body: InnerApp(screenHeight: screenheight-200.0, screenwidth: screenwidth-50.0, initPosition: 50.0,)
-    );
-  }
-
-
-}
-
-void main() {
-  runApp(MaterialApp(
-      home:LogoApp()));
-}
-
 class InnerApp extends StatefulWidget {
-  final double screenHeight;
-  final double initPosition;
-  final double screenwidth;
+  final Size screenSize;
+  final Offset initPosition;
 
-  const InnerApp({Key key, this.screenHeight, this.initPosition, this.screenwidth}) : super(key: key);
+
+  const InnerApp({Key key, this.screenSize, this.initPosition}) : super(key: key);
 
   @override
   _InnerAppState createState() => new _InnerAppState();
 }
 
-class _InnerAppState extends State<InnerApp> with TickerProviderStateMixin {
+class _InnerAppState extends State<InnerApp> with SingleTickerProviderStateMixin {
 
   Animation<double> animation;
   AnimationController controller;
   GravitySimulation simulation;
-  BallPositionInfo ballPositionInfo;
 
   double topbound;
   double bottombound;
@@ -61,7 +32,7 @@ class _InnerAppState extends State<InnerApp> with TickerProviderStateMixin {
   double animval;
   double xvalue;
   double animvalathit;
- // double progress;
+  // double progress;
   double velocity;
   double bounceupvelocity;
   bool goingleft;
@@ -79,7 +50,6 @@ class _InnerAppState extends State<InnerApp> with TickerProviderStateMixin {
   Offset dragStart;
   Offset dragPosition;
   double currentpositiony;
-  Offset currentposition;
 
 
 
@@ -89,8 +59,8 @@ class _InnerAppState extends State<InnerApp> with TickerProviderStateMixin {
     goingleft = false;
     hit = false;
 
-  //  initxvalue = 0.0;
-    xbound = widget.screenwidth;
+    //  initxvalue = 0.0;
+    xbound = widget.screenSize.width;
     topbound= widget.initPosition;
     bottombound =widget.screenHeight;// - widget.initPosition;
     /*maxydistance = bottombound-topbound;
@@ -99,17 +69,11 @@ class _InnerAppState extends State<InnerApp> with TickerProviderStateMixin {
     xvalue = 0.0;
 
 
-
-
     //fallingdistance = initdistance;
-    ballPositionInfo = new BallPositionInfo();
 
     acceleration = 1540.0;
     currentpositiony = topbound;
-    currentposition = Offset(0.0, topbound);
-    ballPositionInfo.currentxposition = 0.0;
-    ballPositionInfo.currentyposition = topbound;
-   /* duration = Duration(milliseconds: (pow(2*initdistance/acceleration, 0.5)*1000).toInt());
+    /* duration = Duration(milliseconds: (pow(2*initdistance/acceleration, 0.5)*1000).toInt());
 
 
     controller = AnimationController(
@@ -126,8 +90,8 @@ class _InnerAppState extends State<InnerApp> with TickerProviderStateMixin {
       distancefromtopbound = maxydistance-currentydistance;
 
 
-      initxvalue = ballPositionInfo.currentxposition;//currentposition.dx;
-      ballPositionInfo.currentxposition = 0.0;
+      initxvalue = xvalue;
+      xvalue = 0.0;
       duration = Duration(milliseconds: (pow(2*maxydistance/acceleration, 0.5)*1000).toInt());
       controller = AnimationController(
           duration: duration,
@@ -143,13 +107,13 @@ class _InnerAppState extends State<InnerApp> with TickerProviderStateMixin {
         maxydistance, // falling to
         0.0
     );
-     ballstate = BallState.falling;
-     animvalathit= 0.0;
-     //xvalue =// initxvalue;
+    ballstate = BallState.falling;
+    animvalathit= 0.0;
+    //xvalue =// initxvalue;
 
 
-      animation = Tween(begin: 0.0, end: maxydistance ).animate(controller)
-        ..addListener(() {
+    animation = Tween(begin: 0.0, end: maxydistance ).animate(controller)
+      ..addListener(() {
         setState(() {
           animval = animation.value;
           if(goingleft){
@@ -157,35 +121,35 @@ class _InnerAppState extends State<InnerApp> with TickerProviderStateMixin {
               hit = true;
               goingleft = false;
               animvalathit = animval;
-              ballPositionInfo.currentxposition = 0.0;
+              xvalue = 0.0;
             } else if (hit){
-              ballPositionInfo.currentxposition = xbound-((animval-animvalathit)/4);
+              xvalue = xbound-((animval-animvalathit)/4);
             } else{
-              ballPositionInfo.currentxposition = initxvalue-animval/4;
+              xvalue = initxvalue-animval/4;
             }
           } else {
             if((initxvalue+animval/4)>xbound){
               hit = true;
               goingleft = true;
               animvalathit = animval;
-              ballPositionInfo.currentxposition = xbound;
+              xvalue = xbound;
             } else if (hit){
-              ballPositionInfo.currentxposition = (animval-animvalathit)/4;
+              xvalue = (animval-animvalathit)/4;
             } else{
-              ballPositionInfo.currentxposition = initxvalue+animval/4;
+              xvalue = initxvalue+animval/4;
             }
 
           }
 
 
-         //These values should fit duration
+          //These values should fit duration
           velocity = simulation.dx((duration.inMilliseconds/maxydistance) * (animation.value / 1000));
           distancefromtopbound  = simulation.x((duration.inMilliseconds/maxydistance) * ((animation.value) / 1000));
-          ballPositionInfo.currentyposition = distancefromtopbound + topbound;
+          currentpositiony = distancefromtopbound + topbound;
           //double fractionaldistance = newdistance/initdistance;
 
-        //  velocity = simulation.dx((duration.inMilliseconds/newdistance/*initdistance*/) * (fractionaldistance*animation.value / 1000));
-         // progress = simulation.x((duration.inMilliseconds/newdistance/*initdistance*/) * ((fractionaldistance*animation.value) / 1000));
+          //  velocity = simulation.dx((duration.inMilliseconds/newdistance/*initdistance*/) * (fractionaldistance*animation.value / 1000));
+          // progress = simulation.x((duration.inMilliseconds/newdistance/*initdistance*/) * ((fractionaldistance*animation.value) / 1000));
         });
       })
       ..addStatusListener((status) {
@@ -197,7 +161,7 @@ class _InnerAppState extends State<InnerApp> with TickerProviderStateMixin {
               switch (ballstate) {
                 case BallState.falling:
                   ballstate = BallState.rising;
-                  initxvalue = ballPositionInfo.currentxposition;
+                  initxvalue = xvalue;
                   frictionloss = 50.0;
                   bounceupvelocity = -velocity + frictionloss;
 
@@ -219,7 +183,7 @@ class _InnerAppState extends State<InnerApp> with TickerProviderStateMixin {
 
                 case BallState.rising:
                   ballstate = BallState.falling;
-                  initxvalue = ballPositionInfo.currentxposition;
+                  initxvalue = xvalue;
 
                   //fallingfrom = progress;
 
@@ -244,11 +208,10 @@ class _InnerAppState extends State<InnerApp> with TickerProviderStateMixin {
           } else {
             //progress = null;
             controller.stop();
-            controller.dispose();
           }
         }
       });
-      controller.forward();
+    controller.forward();
 
   }
 
@@ -258,8 +221,7 @@ class _InnerAppState extends State<InnerApp> with TickerProviderStateMixin {
     super.dispose();
   }
   void _onPanStart(DragStartDetails details){
-    Offset off = Offset(ballPositionInfo.currentxposition, ballPositionInfo.currentyposition);
-    dragStart = details.globalPosition- off;
+    dragStart = details.globalPosition;
     // Prevents animation from trying to start while it is already running
 
   }
@@ -267,12 +229,13 @@ class _InnerAppState extends State<InnerApp> with TickerProviderStateMixin {
   void _onPanUpdate(DragUpdateDetails details){
     setState(() {
       dragPosition = details.globalPosition;
-      ballPositionInfo.currentxposition = (dragPosition.dx - dragStart.dx);
-      ballPositionInfo.currentyposition = (dragPosition.dy - dragStart.dy);
+      xvalue = (dragPosition.dx - dragStart.dx);
+      currentpositiony = (dragPosition.dy - dragStart.dy);
+      print(currentpositiony);
+      print(xvalue);
 
 
-
-     /* if (null != widget.onSlideUpdate) {
+      /* if (null != widget.onSlideUpdate) {
         // This keeps the parent up to date on any sliding
         widget.onSlideUpdate(cardOffset.distance);
       }*/
@@ -281,16 +244,11 @@ class _InnerAppState extends State<InnerApp> with TickerProviderStateMixin {
 
   void _onPanEnd(DragEndDetails details){
     setState(() {
-      Velocity v = details.velocity;
-      v.pixelsPerSecond.dx;
-      print(v.pixelsPerSecond.dx);
-
-
-      topbound = ballPositionInfo.currentyposition;
+      topbound = currentpositiony;
 
     });
     //Want to keep sliding direction that user was sliding if it is liked/disliked
-   /* final dragVector = cardOffset / cardOffset.distance;
+    /* final dragVector = cardOffset / cardOffset.distance;
     //Dislike region
     final isInLeftRegion = (cardOffset.dx / context.size.width) < -0.45;
     final isInRightRegion = (cardOffset.dx / context.size.width) > 0.45;
@@ -323,12 +281,12 @@ class _InnerAppState extends State<InnerApp> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     return new Stack(
       children: <Widget>[
-      //  Positioned(
+        //  Positioned(
         //  top: progress!=null ? progress+ initialtop: initialtop,
-      //    left: xvalue ,
-    Transform(
-      alignment: Alignment.topLeft,
-      transform: new Matrix4.translationValues(ballPositionInfo.currentxposition,ballPositionInfo.currentyposition /*progress+ initialtop*/, 0.0),
+        //    left: xvalue ,
+        Transform(
+          alignment: Alignment.topLeft,
+          transform: new Matrix4.translationValues(xvalue,currentpositiony /*progress+ initialtop*/, 0.0),
           child:
           Container(
             margin: EdgeInsets.symmetric(vertical: 10.0),
@@ -342,14 +300,14 @@ class _InnerAppState extends State<InnerApp> with TickerProviderStateMixin {
             ),
           ),
         ),
-    Align(
-    alignment: Alignment.bottomCenter,
-    child: Container(
-    width: double.infinity,
-    height: 150.0,
-    color: Colors.red,
-    ),
-    ),
+        Align(
+          alignment: Alignment.bottomCenter,
+          child: Container(
+            width: double.infinity,
+            height: 150.0,
+            color: Colors.red,
+          ),
+        ),
         Padding(
           padding: const EdgeInsets.all(20.0),
           child: Align(
@@ -368,33 +326,13 @@ class _InnerAppState extends State<InnerApp> with TickerProviderStateMixin {
   }
 }
 
+
+
+
 enum BallState
 {
   idle,
   rising,
   falling,
   bouncing,
-}
-
-
-class BallPositionInfo extends ChangeNotifier{
-  double _currentxposition;
-  double _currentyposition;
-  double _velocityx;
-  double _velocityy;
-  double _acceleration;
-
-  double get currentxposition => _currentxposition;
-  set currentxposition(double newValue){
-    _currentxposition = newValue;
-    notifyListeners();
-  }
-
-  double get currentyposition => _currentyposition;
-  set currentyposition(double newValue){
-    _currentyposition = newValue;
-    notifyListeners();
-  }
-
-
 }
