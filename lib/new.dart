@@ -1,79 +1,71 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+
+import 'package:flutter/animation.dart';
 import 'package:flutter/physics.dart';
-class InnerApp extends StatefulWidget {
+
+
+
+class InnerApp2 extends StatefulWidget {
   final Size screenSize;
-  final Offset initPosition;
+  final EdgeInsets padding;
 
 
-  const InnerApp({Key key, this.screenSize, this.initPosition}) : super(key: key);
+
+
+  const InnerApp2({Key key, this.screenSize,  this.padding}) : super(key: key);
 
   @override
   _InnerAppState createState() => new _InnerAppState();
 }
 
-class _InnerAppState extends State<InnerApp> with SingleTickerProviderStateMixin {
+class _InnerAppState extends State<InnerApp2> with TickerProviderStateMixin {
 
   Animation<double> animation;
   AnimationController controller;
-  GravitySimulation simulation;
-
-  double topbound;
-  double bottombound;
-  double maxydistance;
-  double initxvalue;
-
-  double currentydistance;
-  double distancefromtopbound;
-
+  BallPositionInfo ballPositionInfo;
 
   BallState ballstate;
-  double animval;
-  double xvalue;
-  double animvalathit;
-  // double progress;
-  double velocity;
-  double bounceupvelocity;
-  bool goingleft;
-  bool hit;
-
-  double xbound;
-
-
-  double frictionloss;
-
-  Duration duration;
-  double acceleration;
 
 
   Offset dragStart;
   Offset dragPosition;
-  double currentpositiony;
+
+
+ // double currentpositiony;
+  Offset currentposition;
+ // double topBound;
+ // double bottombound;
 
 
 
   initState() {
     super.initState();
+
     ballstate = BallState.idle;
-    goingleft = false;
-    hit = false;
+    ballPositionInfo = new BallPositionInfo();
+   ballPositionInfo.minYpercent = widget.padding.top/widget.screenSize.height;
+    ballPositionInfo.maxYpercent = (widget.screenSize.height-widget.padding.bottom)/widget.screenSize.height;
+    ballPositionInfo.maxXpercent = (widget.screenSize.width- widget.padding.right)/widget.screenSize.width;
+    ballPositionInfo.minXpercent = widget.padding.left/widget.screenSize.width;
 
-    //  initxvalue = 0.0;
-    xbound = widget.screenSize.width;
-    topbound= widget.initPosition;
-    bottombound =widget.screenHeight;// - widget.initPosition;
-    /*maxydistance = bottombound-topbound;
-    currentydistance = maxydistance;
-    distancefromtopbound = maxydistance-currentydistance;*/
-    xvalue = 0.0;
+    ballPositionInfo.addListener((){
+      setState(() {
+
+      });
+    });
+    controller = AnimationController(
+        vsync: this);
 
 
-    //fallingdistance = initdistance;
-
-    acceleration = 1540.0;
-    currentpositiony = topbound;
+    //acceleration = 1540.0;
+   // currentpositiony = topbound;
+   // currentposition = Offset(0.0, topbound);
+    //ballPositionInfo.currentxposition = 0.0;
+    //ballPositionInfo.currentyposition = topbound;
     /* duration = Duration(milliseconds: (pow(2*initdistance/acceleration, 0.5)*1000).toInt());
+
 
 
     controller = AnimationController(
@@ -83,116 +75,36 @@ class _InnerAppState extends State<InnerApp> with SingleTickerProviderStateMixin
   }
 
   _dropBall() {
-
     setState(() {
-      maxydistance = bottombound-topbound;
-      currentydistance = maxydistance;
-      distancefromtopbound = maxydistance-currentydistance;
-
-
-      initxvalue = xvalue;
-      xvalue = 0.0;
-      duration = Duration(milliseconds: (pow(2*maxydistance/acceleration, 0.5)*1000).toInt());
-      controller = AnimationController(
-          duration: duration,
-          vsync: this);
-
-
+      ballstate = BallState.falling;
+      ballPositionInfo.Falling();
+     // print(ballPositionInfo.duration);
+      controller.duration = ballPositionInfo.duration;
     });
 
 
-    simulation = GravitySimulation(
-        acceleration,
-        distancefromtopbound, // falling from
-        maxydistance, // falling to
-        0.0
-    );
-    ballstate = BallState.falling;
-    animvalathit= 0.0;
-    //xvalue =// initxvalue;
 
-
-    animation = Tween(begin: 0.0, end: maxydistance ).animate(controller)
+    animation = Tween(begin: 0.0, end: 1.0 ).animate(controller)
       ..addListener(() {
         setState(() {
-          animval = animation.value;
-          if(goingleft){
-            if((initxvalue-animval/4)<0){
-              hit = true;
-              goingleft = false;
-              animvalathit = animval;
-              xvalue = 0.0;
-            } else if (hit){
-              xvalue = xbound-((animval-animvalathit)/4);
-            } else{
-              xvalue = initxvalue-animval/4;
-            }
-          } else {
-            if((initxvalue+animval/4)>xbound){
-              hit = true;
-              goingleft = true;
-              animvalathit = animval;
-              xvalue = xbound;
-            } else if (hit){
-              xvalue = (animval-animvalathit)/4;
-            } else{
-              xvalue = initxvalue+animval/4;
-            }
+          ballPositionInfo.animationvalue = animation.value;
 
-          }
-
-
-          //These values should fit duration
-          velocity = simulation.dx((duration.inMilliseconds/maxydistance) * (animation.value / 1000));
-          distancefromtopbound  = simulation.x((duration.inMilliseconds/maxydistance) * ((animation.value) / 1000));
-          currentpositiony = distancefromtopbound + topbound;
-          //double fractionaldistance = newdistance/initdistance;
-
-          //  velocity = simulation.dx((duration.inMilliseconds/newdistance/*initdistance*/) * (fractionaldistance*animation.value / 1000));
-          // progress = simulation.x((duration.inMilliseconds/newdistance/*initdistance*/) * ((fractionaldistance*animation.value) / 1000));
         });
       })
       ..addStatusListener((status) {
         if (animation.isCompleted ) {
-          hit=false;
-          if (currentydistance > 10.0) {
-            setState(() {
 
+          if (!ballPositionInfo.isStopped()/*currentpeakminYpercent*/) {
+            setState(() {
               switch (ballstate) {
                 case BallState.falling:
                   ballstate = BallState.rising;
-                  initxvalue = xvalue;
-                  frictionloss = 50.0;
-                  bounceupvelocity = -velocity + frictionloss;
-
-                  duration = Duration(
-                      milliseconds: (-bounceupvelocity * 1000 / acceleration)
-                          .round()
-                  );
-                  currentydistance = .5 * acceleration *
-                      pow(duration.inMilliseconds / 1000, 2);
-                  distancefromtopbound = maxydistance-currentydistance;
-
-                  simulation = GravitySimulation(
-                      acceleration,
-                      maxydistance, //starting from,
-                      distancefromtopbound, //going to,
-                      bounceupvelocity
-                  );
+                  ballPositionInfo.Rising();
                   break;
 
                 case BallState.rising:
                   ballstate = BallState.falling;
-                  initxvalue = xvalue;
-
-                  //fallingfrom = progress;
-
-                  simulation = GravitySimulation(
-                      acceleration,
-                      distancefromtopbound,
-                      maxydistance,
-                      0.0
-                  );
+                  ballPositionInfo.Falling();
                   break;
 
                 case BallState.idle:
@@ -201,15 +113,15 @@ class _InnerAppState extends State<InnerApp> with SingleTickerProviderStateMixin
                   break;
               }
 
-              controller.duration = duration;
+              controller.duration = ballPositionInfo.duration;
               controller.reset();
               controller.forward();
             });
           } else {
-            //progress = null;
             controller.stop();
+            controller.dispose();
           }
-        }
+       }
       });
     controller.forward();
 
@@ -221,7 +133,8 @@ class _InnerAppState extends State<InnerApp> with SingleTickerProviderStateMixin
     super.dispose();
   }
   void _onPanStart(DragStartDetails details){
-    dragStart = details.globalPosition;
+    Offset off = Offset(widget.screenSize.width*ballPositionInfo.currentXpercent, widget.screenSize.height*ballPositionInfo.currentYpercent);
+    dragStart = details.globalPosition- off;
     // Prevents animation from trying to start while it is already running
 
   }
@@ -229,64 +142,36 @@ class _InnerAppState extends State<InnerApp> with SingleTickerProviderStateMixin
   void _onPanUpdate(DragUpdateDetails details){
     setState(() {
       dragPosition = details.globalPosition;
-      xvalue = (dragPosition.dx - dragStart.dx);
-      currentpositiony = (dragPosition.dy - dragStart.dy);
-      print(currentpositiony);
-      print(xvalue);
+      ballPositionInfo.currentXpercent = (dragPosition.dx - dragStart.dx)/widget.screenSize.width;
+      ballPositionInfo.currentYpercent = (dragPosition.dy - dragStart.dy)/widget.screenSize.height;
 
-
-      /* if (null != widget.onSlideUpdate) {
-        // This keeps the parent up to date on any sliding
-        widget.onSlideUpdate(cardOffset.distance);
-      }*/
     });
   }
 
   void _onPanEnd(DragEndDetails details){
     setState(() {
-      topbound = currentpositiony;
+      Velocity v = details.velocity;
+      double velocityx = v.pixelsPerSecond.dx/widget.screenSize.width;
+      double velocityy = v.pixelsPerSecond.dy/widget.screenSize.height;
+      ballPositionInfo.onPanEnd(velocityx, velocityy);
+      _dropBall();
+
+     // ballPositionInfo.currentpeakminYpercent = ballPositionInfo.currentYpercent;
+
 
     });
-    //Want to keep sliding direction that user was sliding if it is liked/disliked
-    /* final dragVector = cardOffset / cardOffset.distance;
-    //Dislike region
-    final isInLeftRegion = (cardOffset.dx / context.size.width) < -0.45;
-    final isInRightRegion = (cardOffset.dx / context.size.width) > 0.45;
-    final isInTopRegion = (cardOffset.dy / context.size.height) < -0.40;
 
-    setState(() {
-      if (isInLeftRegion || isInRightRegion) {
-        // using context.size to adapt the app to different screen sizes
-        slideOutTween = new Tween(begin: cardOffset, end: dragVector * (2 * context.size.width));
-        slideOutAnimation.forward(from: 0.0);
-
-        slideOutDirection = isInLeftRegion ? SlideDirection.left : SlideDirection.right;
-      } else if (isInTopRegion) {
-        slideOutTween = new Tween(begin: cardOffset, end: dragVector * (2 * context.size.height));
-        slideOutAnimation.forward(from: 0.0);
-
-        slideOutDirection = SlideDirection.up;
-      } else {
-        // If not in any of the regions it will slide beack to the middle
-        slideBackStart = cardOffset;
-        slideBackAnimation.forward(from: 0.0);
-      }
-    });
-
-
-*/
   }
 
   @override
   Widget build(BuildContext context) {
+    double xposition = ballPositionInfo.currentXpercent * widget.screenSize.width;
+    double yposition = ballPositionInfo.currentYpercent * widget.screenSize.height;
     return new Stack(
       children: <Widget>[
-        //  Positioned(
-        //  top: progress!=null ? progress+ initialtop: initialtop,
-        //    left: xvalue ,
         Transform(
           alignment: Alignment.topLeft,
-          transform: new Matrix4.translationValues(xvalue,currentpositiony /*progress+ initialtop*/, 0.0),
+          transform: new Matrix4.translationValues(xposition, yposition, 0.0),
           child:
           Container(
             margin: EdgeInsets.symmetric(vertical: 10.0),
@@ -300,11 +185,11 @@ class _InnerAppState extends State<InnerApp> with SingleTickerProviderStateMixin
             ),
           ),
         ),
-        Align(
+       Align(
           alignment: Alignment.bottomCenter,
           child: Container(
             width: double.infinity,
-            height: 150.0,
+            height: widget.padding.bottom,
             color: Colors.red,
           ),
         ),
@@ -326,13 +211,262 @@ class _InnerAppState extends State<InnerApp> with SingleTickerProviderStateMixin
   }
 }
 
-
-
-
 enum BallState
 {
   idle,
   rising,
   falling,
   bouncing,
+}
+
+
+class BallPositionInfo extends ChangeNotifier{
+
+  double _velocityx;
+  double _velocityy;
+  double _minYpercent = 0.0;
+  double _maxYpercent = 0.0;
+  double _currentYpercent;
+  double _currentpeakminYpercent;
+
+  double _minXpercent = 0.0;
+  double _maxXpercent = 0.0;
+  double _currentXpercent = 0.0;
+
+  double _xvalueatanimationstart;
+  double animationvalueatwallhit;
+
+  double _animationvalue;
+
+
+
+
+  double _bounceupvelocity;
+  bool _goingleft = false;
+  bool _hit;
+
+  Duration _duration;
+
+  GravitySimulation _simulation;
+
+
+
+  double _frictionloss = 0.0;
+  final double _acceleration = 2.0;
+
+
+  double get acceleration => _acceleration;
+
+  Duration get duration => _duration;
+
+/*
+  Y Related values
+
+  */
+  set minYpercent(double newValue){
+    _minYpercent = newValue;
+   _currentpeakminYpercent = _minYpercent;
+   _currentYpercent = _minYpercent;
+    notifyListeners();
+  }
+
+  set maxYpercent(double newValue){
+    _maxYpercent = newValue;
+    notifyListeners();
+  }
+
+  set currentpeakminYpercent(double newValue){
+    _currentpeakminYpercent = newValue;
+    _currentYpercent = _minYpercent;
+    notifyListeners();
+  }
+
+  double get currentYpercent => _currentYpercent;
+
+  set currentYpercent(double newValue){
+    _currentYpercent = newValue;
+    notifyListeners();
+  }
+  /*
+  X Related Values
+
+   */
+  set maxXpercent(double newValue){
+    _maxXpercent = newValue;
+    notifyListeners();
+  }
+  set minXpercent(double newValue){
+
+    _minXpercent = newValue;
+    _currentXpercent = _minXpercent;
+
+    notifyListeners();
+  }
+
+  set xvalueatanimationstart(double newValue){
+
+   _xvalueatanimationstart = newValue;
+   // _currentXpercent = _xvalueatanimationstart;
+
+    notifyListeners();
+  }
+
+  double get currentXpercent => _currentXpercent;
+
+
+
+  set currentXpercent(double newValue){
+    _currentXpercent = newValue;
+    notifyListeners();
+  }
+
+
+
+  set animationvalue(double newValue) {
+    _animationvalue=newValue;
+
+
+    if(_goingleft){
+      if((_xvalueatanimationstart-_velocityx*_animationvalue)<=_minXpercent){
+        _hit = true;
+        _goingleft = false;
+        animationvalueatwallhit = _animationvalue;
+        _currentXpercent = _minXpercent;
+      } else if (_hit){
+        _currentXpercent = _maxXpercent-((_animationvalue-animationvalueatwallhit)*_velocityx);
+      } else{
+        _currentXpercent = _xvalueatanimationstart-_animationvalue*_velocityx;
+      }
+    } else {
+      if((_xvalueatanimationstart+_animationvalue*_velocityx)>=_maxXpercent){
+        _hit = true;
+        _goingleft = true;
+        animationvalueatwallhit = _animationvalue;
+        _currentXpercent = _maxXpercent;
+      } else if (_hit){
+        _currentXpercent = _minXpercent + (_animationvalue-animationvalueatwallhit)*_velocityx;
+      } else{
+        _currentXpercent = _xvalueatanimationstart+_animationvalue*_velocityx;
+      }
+
+    }
+   /* if(_goingleft){
+      if((_xvalueatanimationstart-_animationvalue/4)<_minXpercent){
+        _hit = true;
+        _goingleft = false;
+        animationvalueatwallhit = _animationvalue;
+        _currentXpercent = _minXpercent;
+      } else if (_hit){
+        _currentXpercent = _maxXpercent-((_animationvalue-animationvalueatwallhit)/4);
+      } else{
+        _currentXpercent = _xvalueatanimationstart-_animationvalue/4;
+      }
+    } else {
+      if((_xvalueatanimationstart+_animationvalue/4)>_maxXpercent){
+        _hit = true;
+        _goingleft = true;
+        animationvalueatwallhit = _animationvalue;
+        _currentXpercent = _maxXpercent;
+      } else if (_hit){
+        _currentXpercent = _minXpercent + (_animationvalue-animationvalueatwallhit)/4;
+      } else{
+       _currentXpercent = _xvalueatanimationstart+_animationvalue/4;
+      }
+
+    }*/
+
+    _velocityy = _simulation.dx((_duration.inMilliseconds) * (_animationvalue / 1000));
+  //  print(_velocityy);
+    _currentYpercent  = _simulation.x((_duration.inMilliseconds) * ((_animationvalue) / 1000));
+  notifyListeners();
+  }
+
+   void Falling() {
+     print("max velocity ${pow(2*_acceleration*(_maxYpercent), 0.5)}");
+    // if (_duration==null) {
+     if (_velocityy<0){ _velocityy=_velocityy*-1;}
+       double distancetoground = _maxYpercent-_currentpeakminYpercent;// distancetoground in percent
+       double time = 2*distancetoground/(_velocityy+pow(pow(_velocityy,2)+2*_acceleration*distancetoground,0.5));
+       _duration =
+       Duration(
+           milliseconds: (/*pow(2 *(_maxYpercent-_currentpeakminYpercent) / _acceleration, 0.5) */ time* 1000)
+               .toInt());
+   //  }
+
+     print("falling ${time*1000}");
+    _hit = false;
+    animationvalueatwallhit = 0.0;
+    //_currentYpercent = _maxydistance - _currentydistance;
+    _xvalueatanimationstart = _currentXpercent;
+
+    _simulation = GravitySimulation(
+        _acceleration,
+        _currentpeakminYpercent, // falling from
+        _maxYpercent, // falling to
+        _velocityy,
+    );
+    notifyListeners();
+  }
+    void Rising(){
+      _hit = false;
+      //_maxydistance =  _maxYpercent - _minYpercent;
+      double maxv = pow(2*_acceleration*(_maxYpercent), 0.5);
+      _bounceupvelocity = -_velocityy+ _frictionloss;
+      double bounceheight = (-_bounceupvelocity<maxv)
+       ? (pow(_bounceupvelocity,2)/(2*_acceleration))
+      : _maxYpercent-_minYpercent;
+
+
+      print(_bounceupvelocity);
+      print(bounceheight);
+      _currentpeakminYpercent = _maxYpercent- bounceheight;
+      double time = 2*bounceheight/(_bounceupvelocity+pow(pow(_bounceupvelocity,2)+2*_acceleration*bounceheight,0.5));
+      print("Rising ${time*1000}");
+
+
+      _duration = Duration(
+          milliseconds:// (-_bounceupvelocity * 1000 / _acceleration)
+          (time*1000)
+              .round()
+      );
+     // print(duration.inMilliseconds);
+
+
+
+      animationvalueatwallhit = 0.0;
+    //  _currentYpercent = _currentpeakminYpercent;
+      _xvalueatanimationstart = _currentXpercent;
+
+      _simulation = GravitySimulation(
+          _acceleration,
+          _maxYpercent,// _which should be _currentYpercent, // rising from
+          _currentpeakminYpercent, // rising to
+          _bounceupvelocity
+      );
+
+      notifyListeners();
+    }
+
+    bool isStopped(){
+      if (_maxYpercent-_currentpeakminYpercent < 0.05) {
+        return true;
+      }else {
+        return false;
+      }
+
+
+    }
+
+    void onPanEnd(double velocityx, double velocityy){
+      _currentpeakminYpercent = _currentYpercent;
+      _xvalueatanimationstart = _currentXpercent;
+      _velocityy = velocityy;
+      _velocityx = velocityx;
+
+      notifyListeners();
+    }
+
+
+
+
 }
