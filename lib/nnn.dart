@@ -188,7 +188,8 @@ class _InnerAppState extends State<InnerApp3> with TickerProviderStateMixin {
           //These values should fit duration
           velocity = simulation.dx((duration.inMilliseconds) * (animation.value / 1000));
           distancefromtopbound  = simulation.x((duration.inMilliseconds)* ((animation.value) / 1000));
-
+          print(velocity);
+          print(distancefromtopbound);
           ballPositionInfo.currentyposition = distancefromtopbound;
         });
       })
@@ -286,7 +287,7 @@ class _InnerAppState extends State<InnerApp3> with TickerProviderStateMixin {
     setState(() {
       Velocity v = details.velocity;
       v.pixelsPerSecond.dx;
-      print(v.pixelsPerSecond.dx);
+      print("y velocity ${v.pixelsPerSecond.dy}");
 
 
       minypercent = ballPositionInfo.currentyposition;

@@ -156,9 +156,6 @@ class _InnerAppState extends State<InnerApp2> with TickerProviderStateMixin {
       ballPositionInfo.onPanEnd(velocityx, velocityy);
       _dropBall();
 
-     // ballPositionInfo.currentpeakminYpercent = ballPositionInfo.currentYpercent;
-
-
     });
 
   }
@@ -325,7 +322,6 @@ class BallPositionInfo extends ChangeNotifier{
   set animationvalue(double newValue) {
     _animationvalue=newValue;
 
-
     if(_goingleft){
       if((_xvalueatanimationstart-_velocityx*_animationvalue)<=_minXpercent){
         _hit = true;
@@ -376,8 +372,9 @@ class BallPositionInfo extends ChangeNotifier{
     }*/
 
     _velocityy = _simulation.dx((_duration.inMilliseconds) * (_animationvalue / 1000));
-  //  print(_velocityy);
+    print(_velocityy);
     _currentYpercent  = _simulation.x((_duration.inMilliseconds) * ((_animationvalue) / 1000));
+    print(_currentYpercent);
   notifyListeners();
   }
 
@@ -465,8 +462,5 @@ class BallPositionInfo extends ChangeNotifier{
 
       notifyListeners();
     }
-
-
-
 
 }
